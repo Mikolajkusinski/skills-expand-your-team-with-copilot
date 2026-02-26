@@ -544,6 +544,14 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    // Build sharing URLs
+    const shareText = encodeURIComponent(
+      `Check out "${name}" at Mergington High School! ${details.description}`
+    );
+    const shareUrl = encodeURIComponent(window.location.href);
+    const twitterShareUrl = `https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`;
+    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${shareText}`;
+
     activityCard.innerHTML = `
       ${tagHtml}
       <h4>${name}</h4>
@@ -577,6 +585,12 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="social-share">
+        <span class="share-label">Share:</span>
+        <a href="${twitterShareUrl}" class="share-btn twitter-btn tooltip" target="_blank" rel="noopener noreferrer" aria-label="Share on X (Twitter)">𝕏<span class="tooltip-text">Share on X (Twitter)</span></a>
+        <a href="${facebookShareUrl}" class="share-btn facebook-btn tooltip" target="_blank" rel="noopener noreferrer" aria-label="Share on Facebook">f<span class="tooltip-text">Share on Facebook</span></a>
+        <button class="share-btn copy-btn tooltip" data-activity="${name}" aria-label="Copy link">🔗<span class="tooltip-text">Copy link</span></button>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -600,6 +614,40 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteButtons = activityCard.querySelectorAll(".delete-participant");
     deleteButtons.forEach((button) => {
       button.addEventListener("click", handleUnregister);
+    });
+
+    // Add click handler for copy link button
+    const copyButton = activityCard.querySelector(".copy-btn");
+    copyButton.addEventListener("click", () => {
+      const url = window.location.href;
+      const originalHTML = copyButton.innerHTML;
+      const showCopied = () => {
+        copyButton.innerHTML = "✓<span class=\"tooltip-text\">Copied!</span>";
+        setTimeout(() => {
+          copyButton.innerHTML = originalHTML;
+        }, 2000);
+      };
+
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(showCopied).catch(() => {
+          showMessage("Could not copy link. Please copy the URL manually.", "error");
+        });
+      } else {
+        // Fallback for non-secure contexts or browsers without Clipboard API
+        const el = document.createElement("textarea");
+        el.value = url;
+        el.style.position = "absolute";
+        el.style.left = "-9999px";
+        document.body.appendChild(el);
+        el.select();
+        try {
+          document.execCommand("copy");
+          showCopied();
+        } catch {
+          showMessage("Could not copy link. Please copy the URL manually.", "error");
+        }
+        document.body.removeChild(el);
+      }
     });
 
     // Add click handler for register button (only when authenticated)
